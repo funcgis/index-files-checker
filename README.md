@@ -3,3 +3,8 @@
 
 在Python 2.7.13环境中测试可直接使用
 
+![https://github.com/funcgis/index-files-checker/blob/master/test/help.png]()
+
+
+
+![https://github.com/funcgis/index-files-checker/blob/master/test/test.png]()
