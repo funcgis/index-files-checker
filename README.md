@@ -3,3 +3,12 @@
 
 在Python 2.7.13环境中测试可直接使用
 
+使用帮助：
+
+![使用帮助](https://github.com/funcgis/index-files-checker/blob/master/test/help.png?raw=true)
+
+
+
+测试使用：
+
+![测试使用](https://github.com/funcgis/index-files-checker/blob/master/test/test.png?raw=true)
