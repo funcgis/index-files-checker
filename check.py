@@ -23,6 +23,29 @@ def list_index(index):
     return lines
 
 
+def get_linetext(line, startnum, endnum):
+    linestr = line.replace("\n", "")
+    if endnum == 0:
+        linestr = linestr[startnum: len(linestr)]
+    else:
+        linestr = linestr[startnum: endnum]
+    return linestr
+
+
+def list_indexsub(index, startnum, endnum):
+    print u"正在扫描索引文件..."
+    f = open(index)  # 返回一个文件对象
+    line = f.readline()  # 调用文件的 readline()方法
+    lines = []
+    if line is not None and line != "":
+        lines.append(get_linetext(line, startnum, endnum))
+    while line:
+        line = f.readline()
+        if line is not None and line != "":
+            lines.append(get_linetext(line, startnum, endnum))
+    return lines
+
+
 def list_folder(folder):
     print u"正在扫描目录..."
     listfiles = []
@@ -42,9 +65,12 @@ def save_list(listData, savePath):
     file.close()
 
 
-def check(index, folder, out, ifOut, ifRight):
+def check(index, folder, out, ifout, ifright, ifsubindex, startnum, endnum):
     if os.path.exists(index):
-        lines = list_index(index)
+        if ifsubindex:
+            lines = list_indexsub(index, startnum, endnum)
+        else:
+            lines = list_index(index)
     else:
         print u'输入索引文件不存在！'
     if os.path.exists(folder):
@@ -59,19 +85,23 @@ def check(index, folder, out, ifOut, ifRight):
         if files is not None and len(files) >= 0:
             listlines = list(set(lines).difference(set(files)))
             print u'未含索引文件', listlines
-            if ifRight:
+            if ifright:
                 listfiles = list(set(files).difference(set(lines)))
                 print u'未含目录文件', listfiles
-            if ifOut:
-                if out is not None and out != "":
-                    if os.path.exists(out):
-                        save_list(listlines, out + '\\notInIndex.txt')
-                    if len(listfiles) > 0:
-                        save_list(listfiles, out + '\\notInFolder.txt')
+            if ifout:
+                if len(listlines) > 0 or len(listfiles) > 0:
+                    if out is not None and out != "":
+                        if os.path.exists(out) and len(listlines) > 0:
+                            save_list(listlines, out + '\\notInIndex.txt')
+                        if len(listfiles) > 0:
+                            save_list(listfiles, out + '\\notInFolder.txt')
+                    else:
+                        if len(listlines) > 0:
+                            save_list(listlines, os.getcwd() + '\\notInIndex.txt')
+                        if len(listfiles) > 0:
+                            save_list(listfiles, os.getcwd() + '\\notInFolder.txt')
                 else:
-                    save_list(listlines, os.getcwd() + '\\notInIndex.txt')
-                    if len(listfiles) > 0:
-                        save_list(listfiles, os.getcwd() + '\\notInFolder.txt')
+                    print u'索引文件与文件夹内文件一致！，没有输出差异文件。'
         else:
             print u'文件夹为空！'
     else:
@@ -84,23 +114,34 @@ def get_help():
     print '\n', u"使用方式：", '\n', u"-i         输入索引文件", '\n', u"-f         输入实际文件文件夹", '\n'\
         u"-k         是否输出结果文件（可选）", \
         '\n', u"-o         与 -k 一起使用，指定输出文件路径，默认为程序执行当前路径（可选）",\
-        '\n', u"-r         是否反向对比（即文件夹中存在，索引文件中不存在）（可选）", '\n', u"-h         查看帮助"
+        '\n', u"-r         是否反向对比（即文件夹中存在，索引文件中不存在）（可选）", \
+        '\n', u"-c         是否截取索引记录字符串子串进行对比（可选）", \
+        '\n', u"-s         否截取索引记录字符串子串起始字符数（可选，-c启用时生效，默认为0）", \
+        '\n', u"-e         否截取索引记录字符串子串终止字符数（可选，-c启用时生效，默认为全长）", \
+        '\n', u"-h         查看帮助"
     print '\n', u"使用示例：", '\n', u"python ./check.py -i index.txt -f E:\\test -o E:\\test"
 
 
 def get_error():
+    # if type == 0:
     print u"请输入 -i, -f 两个必须参数，详细请输入 -h 查看帮助"
+    # elif type == 1:
+    #     print u"截取索引记录字符时，截取终点-e必须大于0，详细请输入 -h 查看帮助"
 
 
 def main(argv):
     indexfile = u""
     foldername = u""
     outfile = u""
-    ifOut = False
-    ifRight = False
+    ifout = False
+    ifright = False
+    #是否只截取index中部分字符串作对比
+    ifsubindex = False
+    startnum = 0
+    endnum = 0
 
     try:
-        opts, args = getopt.getopt(argv, "hkri:f:o:", ["indexfile=", "foldername=", "outfile="])
+        opts, args = getopt.getopt(argv, "hkrci:f:o:s:e:", ["indexfile=", "foldername=", "outfile="])
     except getopt.GetoptError:
         get_error()
         sys.exit(2)
@@ -115,13 +156,19 @@ def main(argv):
             foldername = arg
         elif opt in ("-o", "--outfile"):
             outfile = arg
-        elif opt in ("-r", "--ifRight"):
-            ifRight = True
-        elif opt in ("-k", "--ifOut"):
-            ifOut = True
+        elif opt in ("-r", "--ifright"):
+            ifright = True
+        elif opt in ("-k", "--ifout"):
+            ifout = True
+        elif opt in ("-c", "--ifsubindex"):
+            ifsubindex = True
+        elif opt in ("-s", "--startnum"):
+            startnum = int(arg)
+        elif opt in ("-e", "--endnum"):
+            endnum = int(arg)
 
     if indexfile != "" and foldername != "":
-        check(indexfile, foldername, outfile, ifOut, ifRight)
+        check(indexfile, foldername, outfile, ifout, ifright, ifsubindex, startnum, endnum)
     else:
         get_error()
 
