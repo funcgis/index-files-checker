@@ -25,6 +25,11 @@ def list_index(index):
 
 def get_linetext(line, startnum, endnum):
     linestr = line.replace("\n", "")
+    ifLenFine = False #判断截取长度是否在字符长度范围内，否侧不截取
+    if startnum > len(linestr) or endnum > len(linestr):
+        print u'截取索引超出字符串长度！跳过截取操作'
+        startnum = 0
+        endnum = len(linestr)
     if endnum == 0:
         linestr = linestr[startnum: len(linestr)]
     else:
@@ -34,8 +39,8 @@ def get_linetext(line, startnum, endnum):
 
 def list_indexsub(index, startnum, endnum):
     print u"正在扫描索引文件..."
-    f = open(index)  # 返回一个文件对象
-    line = f.readline()  # 调用文件的 readline()方法
+    f = open(index)
+    line = f.readline()
     lines = []
     if line is not None and line != "":
         lines.append(get_linetext(line, startnum, endnum))
@@ -51,9 +56,6 @@ def list_folder(folder):
     listfiles = []
     for root, dirs, files in os.walk(folder):
         listfiles = files
-        # print(root)  # 当前目录路径
-        # print(dirs)  # 当前路径下所有子目录
-        # print(files)  # 当前路径下所有非目录子文件
     return listfiles
 
 
@@ -66,6 +68,7 @@ def save_list(listData, savePath):
 
 
 def check(index, folder, out, ifout, ifright, ifsubindex, startnum, endnum):
+    lines = files = None
     if os.path.exists(index):
         if ifsubindex:
             lines = list_indexsub(index, startnum, endnum)
@@ -78,9 +81,7 @@ def check(index, folder, out, ifout, ifright, ifsubindex, startnum, endnum):
     else:
         print u'输入文件夹不存在！'
 
-    listlines = []
-    listfiles = []
-
+    listlines = listfiles = []
     if lines is not None and len(lines) >= 0:
         if files is not None and len(files) >= 0:
             listlines = list(set(lines).difference(set(files)))
@@ -92,14 +93,14 @@ def check(index, folder, out, ifout, ifright, ifsubindex, startnum, endnum):
                 if len(listlines) > 0 or len(listfiles) > 0:
                     if out is not None and out != "":
                         if os.path.exists(out) and len(listlines) > 0:
-                            save_list(listlines, out + '\\notInIndex.txt')
+                            save_list(listlines, out + '\\inIndexNotInFolder.txt')
                         if len(listfiles) > 0:
-                            save_list(listfiles, out + '\\notInFolder.txt')
+                            save_list(listfiles, out + '\\inFolderNotInIndex.txt')
                     else:
                         if len(listlines) > 0:
-                            save_list(listlines, os.getcwd() + '\\notInIndex.txt')
+                            save_list(listlines, os.getcwd() + '\\inIndexNotInFolder.txt')
                         if len(listfiles) > 0:
-                            save_list(listfiles, os.getcwd() + '\\notInFolder.txt')
+                            save_list(listfiles, os.getcwd() + '\\inFolderNotInIndex.txt')
                 else:
                     print u'索引文件与文件夹内文件一致！，没有输出差异文件。'
         else:
@@ -119,14 +120,11 @@ def get_help():
         '\n', u"-s         否截取索引记录字符串子串起始字符数（可选，-c启用时生效，默认为0）", \
         '\n', u"-e         否截取索引记录字符串子串终止字符数（可选，-c启用时生效，默认为全长）", \
         '\n', u"-h         查看帮助"
-    print '\n', u"使用示例：", '\n', u"python ./check.py -i index.txt -f E:\\test -o E:\\test"
+    print '\n', u"使用示例：", '\n', u"python ./check.py -i index.txt -f E:\\test -o E:\\test -c -s 1 -e 56"
 
 
 def get_error():
-    # if type == 0:
     print u"请输入 -i, -f 两个必须参数，详细请输入 -h 查看帮助"
-    # elif type == 1:
-    #     print u"截取索引记录字符时，截取终点-e必须大于0，详细请输入 -h 查看帮助"
 
 
 def main(argv):
@@ -135,7 +133,6 @@ def main(argv):
     outfile = u""
     ifout = False
     ifright = False
-    #是否只截取index中部分字符串作对比
     ifsubindex = False
     startnum = 0
     endnum = 0
